@@ -136,24 +136,6 @@ Your goal as a cybersecurity or automation professional is to **enhance security
 
 ---
 
-### 🧑‍💼 Recruiter’s Note
-
-This project showcases:
-
-* **Security Awareness:** Understanding browser fingerprinting and ethical bot detection.
-* **Automation Expertise:** Selenium scripting, DOM handling, data extraction.
-* **Analytical Thinking:** Comparing behavioral patterns between real and automated sessions.
-* **Ethical Practice:** Demonstrating responsible research methodology.
-
-Recruiters and technical interviewers value this because it reflects **a mix of testing, scripting, and security domain knowledge** — essential for roles like:
-
-> 🔹 QA Automation Engineer
-> 🔹 Cybersecurity Analyst
-> 🔹 Red Team / Web Security Researcher
-> 🔹 SDET (Software Development Engineer in Test)
-
----
-
 ### 💡 Author’s Note
 
 > “I built this demo to explore how browsers reveal automation and to learn how ethical detection mechanisms work.
