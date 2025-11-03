@@ -1,0 +1,103 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Automation Detection Demo</title>
+  <style>
+    body { font-family: Arial, Helvetica, sans-serif; margin: 18px; line-height: 1.4; }
+    pre { background:#f6f8fa; padding:12px; border-radius:6px; overflow:auto; max-height:320px; }
+    .ok { color: green; } .warn { color: darkorange; } .bad { color: red; }
+    .grid { display:grid; grid-template-columns: 320px 1fr; gap:12px 20px; align-items:start; }
+  </style>
+</head>
+<body>
+  <h1>Automation Detection Demo</h1>
+  <p>This page displays several signals commonly used to detect automation. Open it manually and then open it via your automated tool to compare.</p>
+
+  <div class="grid">
+    <div><strong>navigator.webdriver</strong></div><div id="webdriver"></div>
+    <div><strong>userAgent</strong></div><div id="ua"></div>
+    <div><strong>plugins.length</strong></div><div id="plugins"></div>
+    <div><strong>languages</strong></div><div id="langs"></div>
+    <div><strong>doNotTrack</strong></div><div id="dnt"></div>
+    <div><strong>platform</strong></div><div id="platform"></div>
+    <div><strong>hardwareConcurrency</strong></div><div id="hc"></div>
+    <div><strong>webglVendor/Renderer</strong></div><div id="webgl"></div>
+    <div><strong>Touch support</strong></div><div id="touch"></div>
+    <div><strong>Has headless indicators</strong></div><div id="headless"></div>
+  </div>
+
+  <h3>Keyboard / Mouse event timing (last 50 events)</h3>
+  <pre id="eventsLog">waiting for events...</pre>
+
+  <h3>Console-detectable JS checks (for automation research)</h3>
+  <pre id="jsChecks"></pre>
+
+  <script>
+    // Basic signals
+    const out = (id, v) => document.getElementById(id).innerText = String(v);
+
+    out('webdriver', navigator.webdriver);
+    out('ua', navigator.userAgent);
+    out('plugins', navigator.plugins ? navigator.plugins.length : 'n/a');
+    out('langs', navigator.languages ? navigator.languages.join(', ') : 'n/a');
+    out('dnt', navigator.doNotTrack);
+    out('platform', navigator.platform);
+    out('hc', navigator.hardwareConcurrency || 'n/a');
+
+    // WebGL vendor/renderer (best-effort)
+    function getWebGLInfo(){
+      try {
+        var canvas = document.createElement('canvas');
+        var gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+        if(!gl) return ['n/a','n/a'];
+        var dbgRender = gl.getExtension('WEBGL_debug_renderer_info');
+        if (dbgRender) {
+          return [gl.getParameter(dbgRender.UNMASKED_VENDOR_WEBGL), gl.getParameter(dbgRender.UNMASKED_RENDERER_WEBGL)];
+        }
+        return ['unknown','unknown'];
+      } catch (e) { return ['error','error']; }
+    }
+    const webgl = getWebGLInfo();
+    out('webgl', webgl.join(' | '));
+
+    // touch support
+    out('touch', ('ontouchstart' in window) || (navigator.maxTouchPoints && navigator.maxTouchPoints > 0));
+
+    // basic headless indicator heuristics
+    const headlessIndicators = [];
+    if (/HeadlessChrome/.test(navigator.userAgent)) headlessIndicators.push('ua-headless');
+    if (!navigator.plugins || navigator.plugins.length === 0) headlessIndicators.push('no-plugins');
+    if (navigator.webdriver) headlessIndicators.push('navigator.webdriver');
+    out('headless', headlessIndicators.length ? headlessIndicators.join(', ') : 'none-detected');
+
+    // keyboard/mouse timing capture
+    const events = [];
+    const MAX = 50;
+    function logEvent(e) {
+      const t = performance.now();
+      events.push({type: e.type, key: e.key || '', time: t});
+      if (events.length > MAX) events.shift();
+      document.getElementById('eventsLog').innerText = events.map(
+         (ev, i) => `${i}: ${ev.type.padEnd(9)} key:${ev.key.padEnd(6)} t:${ev.time.toFixed(1)}ms`
+      ).join('\n');
+    }
+
+    ['keydown','keypress','keyup','mousemove','mousedown','mouseup','touchstart','touchmove'].forEach(ev =>
+      window.addEventListener(ev, logEvent, {passive:true})
+    );
+
+    // JS-checks (console-summaries)
+    const checks = [];
+    checks.push(['navigator.webdriver', !!navigator.webdriver]);
+    checks.push(['permissions query for notifications (may reveal headless)', 'see console']);
+    checks.push(['navigator.plugins length', navigator.plugins ? navigator.plugins.length : 'n/a']);
+    checks.push(['navigator.languages', navigator.languages ? navigator.languages.join(', ') : 'n/a']);
+    checks.push(['document.hasFocus()', document.hasFocus()]);
+    document.getElementById('jsChecks').innerText = checks.map(c => `${c[0]} : ${c[1]}`).join('\n');
+
+    // helper to print a timestamp on console for correlation
+    console.log('DEMO_START', {time: Date.now(), ua: navigator.userAgent, webdriver: navigator.webdriver});
+  </script>
+</body>
+</html>
